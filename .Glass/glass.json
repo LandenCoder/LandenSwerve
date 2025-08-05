@@ -1,0 +1,55 @@
+{
+  "NetworkTables": {
+    "Persistent Values": {
+      "open": false
+    },
+    "Retained Values": {
+      "open": false
+    },
+    "Transitory Values": {
+      "open": false
+    },
+    "transitory": {
+      "SmartDashboard": {
+        "Field": {
+          "open": false
+        },
+        "Swerve Module": {
+          "open": false
+        },
+        "Voltage": {
+          "open": false
+        }
+      }
+    },
+    "types": {
+      "/FMSInfo": "FMSInfo",
+      "/SmartDashboard/Field": "Field2d"
+    },
+    "windows": {
+      "/SmartDashboard/Field": {
+        "window": {
+          "visible": true
+        }
+      }
+    }
+  },
+  "NetworkTables Info": {
+    "glass@1": {
+      "Publishers": {
+        "open": false
+      },
+      "Subscribers": {
+        "open": false
+      },
+      "open": false
+    }
+  },
+  "NetworkTables Settings": {
+    "serverTeam": "4967",
+    "visible": false
+  },
+  "NetworkTables View": {
+    "visible": false
+  }
+}
