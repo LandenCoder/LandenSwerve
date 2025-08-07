@@ -27,8 +27,9 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public class SwerveModule {
   private static final double WHEEL_RADIUS = Units.inchesToMeters(0.985);
   private static final double WHEEL_CIRCUMFERENCE = WHEEL_RADIUS * 2 * Math.PI;
-  private static final double GEAR_RATIO = 7.2;
-  public static final double DRIVE_METERS_PER_MOTOR_ROTATION = WHEEL_RADIUS * Math.PI * 33 / 45 / 15/13;
+  private static final double GEAR_RATIO = 7.027;
+ // public static final double DRIVE_METERS_PER_MOTOR_ROTATION = WHEEL_RADIUS * Math.PI * 33 / 45 / 15/13;
+  private static final double DRIVE_METERS_PER_MOTOR_ROTATION = WHEEL_CIRCUMFERENCE / GEAR_RATIO;
 
   private static final double kModuleMaxAngularVelocity = Drivetrain.kMaxAngularSpeed;
   private static final double kModuleMaxAngularAcceleration = 2 * Math.PI; // radians per second squared
@@ -174,9 +175,5 @@ public class SwerveModule {
 
     m_driveMotor.setVoltage(driveOutput + driveFeedforward);
     m_turningMotor.setVoltage(turnOutput);// + turnFeedforward
-
-    SmartDashboard.putNumber("Voltage", turnOutput);
-    SmartDashboard.putNumber("getAngle()", getAngle());
-    SmartDashboard.putNumber("getDegrees", desiredState.angle.getDegrees());
   }
 }

@@ -59,6 +59,7 @@ public class Drivetrain extends SubsystemBase {
             m_backLeft.getPosition(),
             m_backRight.getPosition()
         });
+    // m_field.setRobotPose(m_odometry.getPoseMeters());
     m_field.setRobotPose(m_odometry.getPoseMeters());
   }
 
@@ -105,17 +106,15 @@ public class Drivetrain extends SubsystemBase {
 
   @Override
   public void periodic() {
-    SmartDashboard.putNumber("Swerve Module/fl angle", m_frontLeft.getAngle());
-    SmartDashboard.putNumber("Swerve Module/fr angle", m_frontRight.getAngle());
-    SmartDashboard.putNumber("Swerve Module/bl angle", m_backLeft.getAngle());
-    SmartDashboard.putNumber("Swerve Module/br angle", m_backRight.getAngle());
-
-    SmartDashboard.putNumber("Swerve Module/fl speed", m_frontLeft.getState().speedMetersPerSecond);
-    SmartDashboard.putNumber("Swerve Module/fr speed", m_frontRight.getState().speedMetersPerSecond);
-    SmartDashboard.putNumber("Swerve Module/bl speed", m_backLeft.getState().speedMetersPerSecond);
-    SmartDashboard.putNumber("Swerve Module/br speed", m_backRight.getState().speedMetersPerSecond);
-
     SmartDashboard.putNumber("gyro", m_gyro.getAngle());
+
+    SmartDashboard.putNumber("robotX", m_field.getRobotPose().getX());
+    SmartDashboard.putNumber("robotY", m_field.getRobotPose().getY());
+
+    SmartDashboard.putNumber("MetersDriven/fl", m_frontLeft.getPosition().distanceMeters);
+    SmartDashboard.putNumber("MetersDriven/fr", m_frontRight.getPosition().distanceMeters);
+    SmartDashboard.putNumber("MetersDriven/bl", m_backLeft.getPosition().distanceMeters);
+    SmartDashboard.putNumber("MetersDriven/br", m_backRight.getPosition().distanceMeters);
 
     // do this later (maybe)
 
@@ -128,12 +127,10 @@ public class Drivetrain extends SubsystemBase {
     // SmartDashboard.putNumber("Swerve Module/br desired speed",
     // m_backRight.getState().speedMetersPerSecond);
 
-    // SmartDashboard.putData("Field", m_field);
-    
     updateOdometry();
-    // m_field.setRobotPose(m_odometry.getPoseMeters());
+    SmartDashboard.putData("Field", m_field);
+    m_field.setRobotPose(m_odometry.getPoseMeters());
     super.periodic();
-    
-  }
 
+  }
 }

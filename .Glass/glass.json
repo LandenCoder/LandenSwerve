@@ -28,13 +28,23 @@
     },
     "windows": {
       "/SmartDashboard/Field": {
+        "bottom": 1476,
+        "height": 8.210550308227539,
+        "left": 150,
+        "right": 2961,
+        "top": 79,
+        "width": 16.541748046875,
         "window": {
+          "name": "field",
           "visible": true
         }
       }
     }
   },
   "NetworkTables Info": {
+    "Connections": {
+      "open": true
+    },
     "glass@1": {
       "Publishers": {
         "open": false
@@ -46,6 +56,7 @@
     }
   },
   "NetworkTables Settings": {
+    "mode": "Client (NT4)",
     "serverTeam": "4967",
     "visible": false
   },
