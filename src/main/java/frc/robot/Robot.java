@@ -4,50 +4,70 @@
 
 package frc.robot;
 
+import org.littletonrobotics.junction.LogFileUtil;
+import org.littletonrobotics.junction.LoggedRobot;
+import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.NT4Publisher;
+import org.littletonrobotics.junction.wpilog.WPILOGReader;
+import org.littletonrobotics.junction.wpilog.WPILOGWriter;
+import org.littletonrobotics.urcl.URCL;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.PS4Controller.Button;
 
-public class Robot extends TimedRobot {
-  private final XboxController m_controller = new XboxController(0);
-  private final Drivetrain m_swerve = new Drivetrain();
+public class Robot extends LoggedRobot {
+  public final XboxController controller = new XboxController(0);
+  public final Drivetrain swerve = new Drivetrain();
 
   // Slew rate limiters to make joystick inputs more gentle; 1/3 sec from 0 to 1.
-  private final SlewRateLimiter m_xspeedLimiter = new SlewRateLimiter(3);
-  private final SlewRateLimiter m_yspeedLimiter = new SlewRateLimiter(3);
-  private final SlewRateLimiter m_rotLimiter = new SlewRateLimiter(3);
+  private final SlewRateLimiter xspeedLimiter = new SlewRateLimiter(3);
+  private final SlewRateLimiter yspeedLimiter = new SlewRateLimiter(3);
+  private final SlewRateLimiter rotLimiter = new SlewRateLimiter(3);
+
+  private double speedDivisor;
 
   @Override
   public void autonomousPeriodic() {
     driveWithJoystick(false);
-    m_swerve.updateOdometry();
+    swerve.updateOdometry();
+  }
+
+  @Override
+  public void teleopInit() {
+    swerve.resetOdometry();
   }
 
   @Override
   public void teleopPeriodic() {
     driveWithJoystick(true);
-    m_swerve.periodic();
+    swerve.periodic();
   }
 
 
   private void driveWithJoystick(boolean fieldRelative) {
     // Get the x speed. We are inverting this because Xbox controllers return
     // negative values when we push forward.
-    if (m_controller.getAButton()) {
-      m_swerve.resetGyro();
+    if (controller.getAButton()) {
+      swerve.resetGyro();
     }
+     if (controller.getStartButton() && controller.getLeftBumperButton() && controller.getRightBumperButton()) {
+      speedDivisor = 1;
+     } else {
+      speedDivisor = 9;
+     }
 
     final var xSpeed =
-        -m_xspeedLimiter.calculate(MathUtil.applyDeadband(m_controller.getLeftY(), 0.1))
+        -xspeedLimiter.calculate(MathUtil.applyDeadband(controller.getLeftY(), 0.05))
             * Drivetrain.kMaxSpeed;
 
     // Get the y speed or sideways/strafe speed. We are inverting this because
     // we want a positive value when we pull to the left. Xbox controllers
     // return positive values when you pull to the right by default.
     final var ySpeed =
-        -m_yspeedLimiter.calculate(MathUtil.applyDeadband(m_controller.getLeftX(), 0.1))
+        -yspeedLimiter.calculate(MathUtil.applyDeadband(controller.getLeftX(), 0.05))
             * Drivetrain.kMaxSpeed;
 
     // Get the rate of angular rotation. We are inverting this because we want a
@@ -55,15 +75,50 @@ public class Robot extends TimedRobot {
     // mathematics). Xbox controllers return positive values when you pull to
     // the right by default.
     final var rot =
-        -m_rotLimiter.calculate(MathUtil.applyDeadband(m_controller.getRightX(), 0.1))
+        -rotLimiter.calculate(MathUtil.applyDeadband(controller.getRightX(), 0.05))
             * Drivetrain.kMaxAngularSpeed;
 
-    m_swerve.drive(xSpeed/10, ySpeed/10, rot/10, fieldRelative, getPeriod());
-    //m_swerve.drive(xSpeed, ySpeed, rot, fieldRelative, getPeriod());
+    //swerve.drive(xSpeed/speedDivisor, ySpeed/speedDivisor, rot/speedDivisor, fieldRelative, getPeriod());
+    //swerve.drive(xSpeed/9, 0, 0, fieldRelative, getPeriod());
   }
 
   @Override
   public void disabledPeriodic() {
-    m_swerve.periodic();
+    swerve.periodic();
   }
+  @Override
+public void robotInit() {
+  Logger.recordMetadata("ProjectName", "MyProject"); // Set a metadata value
+
+if (isReal()) {
+    Logger.addDataReceiver(new WPILOGWriter()); // Log to a USB stick ("/U/logs")
+    Logger.addDataReceiver(new NT4Publisher()); // Publish data to NetworkTables
+} else {
+    setUseTiming(false); // Run as fast as possible
+    String logPath = LogFileUtil.findReplayLog(); // Pull the replay log from AdvantageScope (or prompt the user)
+    Logger.setReplaySource(new WPILOGReader(logPath)); // Read replay log
+    Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim"))); // Save outputs to a new log
+}
+
+Logger.start(); // Start logging! No more data receivers, replay sources, or metadata values may be added.
+
+    /* What to do when running the robot normally */
+    if (isReal()) {
+        Logger.addDataReceiver(new WPILOGWriter("/home/lvuser/logs")); // Log to roboRIO for download
+        Logger.addDataReceiver(new NT4Publisher()); // Publish data to NetworkTables
+    } 
+    /* What to do when making a replay log (changing a real log into a simulated log) */
+    else {
+        setUseTiming(false); // Run as fast as possible
+        String logPath = LogFileUtil.findReplayLog(); // Pull the replay log from AdvantageScope (or prompt the user)
+        Logger.setReplaySource(new WPILOGReader(logPath)); // Read replay log
+        Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim"))); // Save outputs to a new log
+    }
+    
+
+/* Unofficial Rev Compatible Logger, used to log Rev data */
+Logger.registerURCL(URCL.startExternal());
+
+Logger.start(); // Start logging! No more data receivers, replay sources, or metadata values may be added.
+}
 }
