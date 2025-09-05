@@ -4,10 +4,14 @@
 
 package frc.robot;
 
+import java.io.PrintStream;
+
 import org.littletonrobotics.junction.Logger;
 
 import com.studica.frc.AHRS;
 import com.studica.frc.AHRS.NavXComType;
+
+import static edu.wpi.first.units.Units.Volts;
 
 import edu.wpi.first.math.controller.HolonomicDriveController;
 import edu.wpi.first.math.controller.PIDController;
@@ -20,12 +24,16 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
+import edu.wpi.first.units.VelocityUnit;
+import edu.wpi.first.units.VoltageUnit;
+import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.AnalogGyro;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
@@ -39,10 +47,10 @@ public class Drivetrain extends SubsystemBase {
   private final Translation2d backLeftLocation = new Translation2d(-0.381, 0.381);
   private final Translation2d backRightLocation = new Translation2d(-0.381, -0.381);
 
-  private final SwerveModule frontLeft = new SwerveModule(8, 1, 0, 0.34326, false, false);
-  private final SwerveModule frontRight = new SwerveModule(2, 3, 1, 0.29980, false, false);
-  private final SwerveModule backLeft = new SwerveModule(6, 7, 3, 0.26367, false, false);
-  private final SwerveModule backRight = new SwerveModule(4, 5, 2, 0.31396, false, false);
+  private final SwerveModule frontLeft = new SwerveModule(8, 1, 0, 0.35181, false, false);
+  private final SwerveModule frontRight = new SwerveModule(2, 3, 1, 0.29321, false, false);
+  private final SwerveModule backLeft = new SwerveModule(6, 7, 3, 0.26343, false, false);
+  private final SwerveModule backRight = new SwerveModule(4, 5, 2, -0.43896, false, false);
 
   private final SwerveDriveKinematics kinematics = new SwerveDriveKinematics(
       frontLeftLocation, frontRightLocation, backLeftLocation, backRightLocation);
@@ -57,6 +65,46 @@ public class Drivetrain extends SubsystemBase {
   private final ProfiledPIDController autonThetaController = new ProfiledPIDController(3, 0, 0,
       autonRotationConstraints); // 1.5
 
+      private final Voltage stepVoltage = new Voltage() {
+        public double magnitude() {
+            return 1;
+        }
+        public double baseUnitMagnitude() {
+            return magnitude();
+        }
+        public Voltage copy() {
+            return stepVoltage;
+        }
+        public VoltageUnit unit() {
+            return null;
+        }
+    };
+    private final Velocity<VoltageUnit> rampRate = new Velocity<VoltageUnit>() {
+        public double magnitude() {
+            return 0.2;
+        }
+        public double baseUnitMagnitude() {
+            return magnitude();
+        }
+        public Velocity<VoltageUnit> copy() {
+            return rampRate;
+        }
+        public VelocityUnit<VoltageUnit> unit() {
+            return null;
+        }
+    };
+
+  // Create the SysId routine
+  private SysIdRoutine sysIdRoutine = new SysIdRoutine(
+      new SysIdRoutine.Config(
+          rampRate, stepVoltage, null, // Use default config
+          (state) -> Logger.recordOutput("SysIdTestState", state.toString())),
+      new SysIdRoutine.Mechanism(
+          (voltage) -> voltageDrive(voltage.in(Volts)),
+          // (voltage) -> voltageDrive(voltage.in(Volts)),
+          null, // No log consumer, since data is recorded by AdvantageKit
+          this));
+  
   public Drivetrain() {
     gyro = new AHRS(NavXComType.kUSB1);
 
@@ -76,21 +124,23 @@ public class Drivetrain extends SubsystemBase {
     // field.setRobotPose(odometry.getPoseMeters());
     field.setRobotPose(odometry.getPoseMeters());
 
-    // Create the SysId routine
-    var sysIdRoutine = new SysIdRoutine(
-        new SysIdRoutine.Config(
-            null, null, null, // Use default config
-            (state) -> Logger.recordOutput("SysIdTestState", state.toString())),
-        new SysIdRoutine.Mechanism(
-            (voltage) -> voltageDrive(),
-            null, // No log consumer, since data is recorded by AdvantageKit
-            this));
-
     // The methods below return Command objects
-    sysIdRoutine.quasistatic(SysIdRoutine.Direction.kForward);
-    sysIdRoutine.quasistatic(SysIdRoutine.Direction.kReverse);
-    sysIdRoutine.dynamic(SysIdRoutine.Direction.kForward);
-    sysIdRoutine.dynamic(SysIdRoutine.Direction.kReverse);
+  }
+
+  public Command sysIdQuadistaticForwards() {
+    return sysIdRoutine.quasistatic(SysIdRoutine.Direction.kForward);
+  }
+
+  public Command sysIdQuadistaticBackwards() {
+    return sysIdRoutine.quasistatic(SysIdRoutine.Direction.kReverse);
+  }
+
+  public Command sysIdDynamicForwards() {
+    return sysIdRoutine.dynamic(SysIdRoutine.Direction.kForward);
+  }
+
+  public Command sysIdDynamicBackwards() {
+    return sysIdRoutine.dynamic(SysIdRoutine.Direction.kReverse);
   }
 
   /**
@@ -117,21 +167,29 @@ public class Drivetrain extends SubsystemBase {
     backLeft.setDesiredState(swerveModuleStates[2]);
     backRight.setDesiredState(swerveModuleStates[3]);
   }
-  public void voltageDrive() {
+/** 
+ * @param voltage voltage
+ */
+  public void voltageDrive(Double voltage) {
+    System.out.println("hi");
     var swerveModuleStates = kinematics.toSwerveModuleStates(
         ChassisSpeeds.discretize(
             true
                 ? ChassisSpeeds.fromFieldRelativeSpeeds(
-                    0.1, 0, 0, gyro.getRotation2d())
+                    voltage, 0, 0, gyro.getRotation2d())
                 : new ChassisSpeeds(0.1, 0, 0),
             0.1));
 
-    SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, kMaxSpeed);
+    SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates,
+     12);//ITS A VOLTAGE!!!
 
-    frontLeft.setDesiredState(swerveModuleStates[0]);
-    frontRight.setDesiredState(swerveModuleStates[1]);
-    backLeft.setDesiredState(swerveModuleStates[2]);
-    backRight.setDesiredState(swerveModuleStates[3]);
+    frontLeft.sysidTestVoltage(swerveModuleStates[0]);
+    frontRight.sysidTestVoltage(swerveModuleStates[1]);
+    backLeft.sysidTestVoltage(swerveModuleStates[2]);
+    backRight.sysidTestVoltage(swerveModuleStates[3]);
+  }
+  public void sysidtester(Double voltage){
+    System.out.println("hi");
   }
 
   /** Updates the field relative position of the robot. */
@@ -178,6 +236,7 @@ public class Drivetrain extends SubsystemBase {
     return kMaxSpeed;
   }
 
+  //TODO: make this
   // public double getMaxAccel() {
   // return ;
   // }
@@ -214,3 +273,4 @@ public class Drivetrain extends SubsystemBase {
     Logger.recordOutput("BRmoduleEncoder", backRight.getAngle());
   }
 }
+//API

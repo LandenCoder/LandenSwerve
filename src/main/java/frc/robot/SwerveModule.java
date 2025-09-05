@@ -22,6 +22,7 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class SwerveModule {
@@ -152,7 +153,7 @@ public class SwerveModule {
 
     // Optimize the reference state to avoid spinning further than 90 degrees
 
-     desiredState.optimize(encoderRotation);///////////////////////OPTIMIZE HERE!!!/////////////////////////////////
+    //  desiredState.optimize(encoderRotation);///////////////////////OPTIMIZE HERE!!!/////////////////////////////////
 
     // Scale speed by cosine of angle error. This scales down movement perpendicular
     // to the desired
@@ -175,6 +176,19 @@ public class SwerveModule {
 
     driveMotor.setVoltage(driveOutput + driveFeedforward);
     turningMotor.setVoltage(turnOutput);// + turnFeedforward
+  }
+  /**
+   * @param desiredState Desired state with voltage and angle.
+   */
+  public void sysidTestVoltage(SwerveModuleState desiredState) {
+
+    var encoderRotation = Rotation2d.fromDegrees(getAngle());
+    desiredState.optimize(encoderRotation);
+    desiredState.cosineScale(encoderRotation);
+    final double turnOutput = turningPIDController.calculate(getAngle(), desiredState.angle.getDegrees());
+
+    driveMotor.setVoltage(desiredState.speedMetersPerSecond);
+    turningMotor.setVoltage(turnOutput);
   }
   public void resetOdometry() {
     driveEncoder.setPosition(0);

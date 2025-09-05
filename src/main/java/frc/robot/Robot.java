@@ -46,79 +46,79 @@ public class Robot extends LoggedRobot {
     swerve.periodic();
   }
 
-
   private void driveWithJoystick(boolean fieldRelative) {
     // Get the x speed. We are inverting this because Xbox controllers return
     // negative values when we push forward.
     if (controller.getAButton()) {
       swerve.resetGyro();
     }
-     if (controller.getStartButton() && controller.getLeftBumperButton() && controller.getRightBumperButton()) {
+    if (controller.getStartButton() && controller.getLeftBumperButton() && controller.getRightBumperButton()) {
       speedDivisor = 1;
-     } else {
+    } else {
       speedDivisor = 9;
-     }
+    }
 
-    final var xSpeed =
-        -xspeedLimiter.calculate(MathUtil.applyDeadband(controller.getLeftY(), 0.05))
-            * Drivetrain.kMaxSpeed;
+    while (controller.getLeftTriggerAxis() > 0.6) {
+      swerve.sysIdQuadistaticForwards();
+    }
+    while (controller.getRightTriggerAxis() > 0.6) {
+      swerve.sysIdQuadistaticBackwards();
+    }
+    while (controller.getLeftBumperButtonPressed()) {
+      swerve.sysIdDynamicForwards();
+    }
+    while (controller.getRightBumperButtonPressed()) {
+      swerve.sysIdDynamicBackwards();
+    }
+
+    final var xSpeed = -xspeedLimiter.calculate(MathUtil.applyDeadband(controller.getLeftY(), 0.05))
+        * Drivetrain.kMaxSpeed;
 
     // Get the y speed or sideways/strafe speed. We are inverting this because
     // we want a positive value when we pull to the left. Xbox controllers
     // return positive values when you pull to the right by default.
-    final var ySpeed =
-        -yspeedLimiter.calculate(MathUtil.applyDeadband(controller.getLeftX(), 0.05))
-            * Drivetrain.kMaxSpeed;
+    final var ySpeed = -yspeedLimiter.calculate(MathUtil.applyDeadband(controller.getLeftX(), 0.05))
+        * Drivetrain.kMaxSpeed;
 
     // Get the rate of angular rotation. We are inverting this because we want a
     // positive value when we pull to the left (remember, CCW is positive in
     // mathematics). Xbox controllers return positive values when you pull to
     // the right by default.
-    final var rot =
-        -rotLimiter.calculate(MathUtil.applyDeadband(controller.getRightX(), 0.05))
-            * Drivetrain.kMaxAngularSpeed;
+    final var rot = -rotLimiter.calculate(MathUtil.applyDeadband(controller.getRightX(), 0.05))
+        * Drivetrain.kMaxAngularSpeed;
 
     //swerve.drive(xSpeed/speedDivisor, ySpeed/speedDivisor, rot/speedDivisor, fieldRelative, getPeriod());
-    //swerve.drive(xSpeed/9, 0, 0, fieldRelative, getPeriod());
+    // swerve.drive(xSpeed/9, 0, 0, fieldRelative, getPeriod());
   }
 
   @Override
   public void disabledPeriodic() {
     swerve.periodic();
   }
+
   @Override
-public void robotInit() {
-  Logger.recordMetadata("ProjectName", "MyProject"); // Set a metadata value
-
-if (isReal()) {
-    Logger.addDataReceiver(new WPILOGWriter()); // Log to a USB stick ("/U/logs")
-    Logger.addDataReceiver(new NT4Publisher()); // Publish data to NetworkTables
-} else {
-    setUseTiming(false); // Run as fast as possible
-    String logPath = LogFileUtil.findReplayLog(); // Pull the replay log from AdvantageScope (or prompt the user)
-    Logger.setReplaySource(new WPILOGReader(logPath)); // Read replay log
-    Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim"))); // Save outputs to a new log
-}
-
-Logger.start(); // Start logging! No more data receivers, replay sources, or metadata values may be added.
+  public void robotInit() {
 
     /* What to do when running the robot normally */
     if (isReal()) {
-        Logger.addDataReceiver(new WPILOGWriter("/home/lvuser/logs")); // Log to roboRIO for download
-        Logger.addDataReceiver(new NT4Publisher()); // Publish data to NetworkTables
-    } 
-    /* What to do when making a replay log (changing a real log into a simulated log) */
-    else {
-        setUseTiming(false); // Run as fast as possible
-        String logPath = LogFileUtil.findReplayLog(); // Pull the replay log from AdvantageScope (or prompt the user)
-        Logger.setReplaySource(new WPILOGReader(logPath)); // Read replay log
-        Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim"))); // Save outputs to a new log
+      Logger.addDataReceiver(new WPILOGWriter("/home/lvuser/logs")); // Log to roboRIO for download
+      Logger.addDataReceiver(new NT4Publisher()); // Publish data to NetworkTables
     }
-    
+    /*
+     * What to do when making a replay log (changing a real log into a simulated
+     * log)
+     */
+    else {
+      setUseTiming(false); // Run as fast as possible
+      String logPath = LogFileUtil.findReplayLog(); // Pull the replay log from AdvantageScope (or prompt the user)
+      Logger.setReplaySource(new WPILOGReader(logPath)); // Read replay log
+      Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim"))); // Save outputs to a new log
+    }
 
-/* Unofficial Rev Compatible Logger, used to log Rev data */
-Logger.registerURCL(URCL.startExternal());
+    /* Unofficial Rev Compatible Logger, used to log Rev data */
+    Logger.registerURCL(URCL.startExternal());
 
-Logger.start(); // Start logging! No more data receivers, replay sources, or metadata values may be added.
-}
+    Logger.start(); // Start logging! No more data receivers, replay sources, or metadata values may
+                    // be added.
+  }
 }
