@@ -183,7 +183,7 @@ public class SwerveModule {
   public void sysidTestVoltage(SwerveModuleState desiredState) {
 
     var encoderRotation = Rotation2d.fromDegrees(getAngle());
-    desiredState.optimize(encoderRotation);
+    // desiredState.optimize(encoderRotation);
     desiredState.cosineScale(encoderRotation);
     final double turnOutput = turningPIDController.calculate(getAngle(), desiredState.angle.getDegrees());
 

@@ -65,39 +65,12 @@ public class Drivetrain extends SubsystemBase {
   private final ProfiledPIDController autonThetaController = new ProfiledPIDController(3, 0, 0,
       autonRotationConstraints); // 1.5
 
-      private final Voltage stepVoltage = new Voltage() {
-        public double magnitude() {
-            return 1;
-        }
-        public double baseUnitMagnitude() {
-            return magnitude();
-        }
-        public Voltage copy() {
-            return stepVoltage;
-        }
-        public VoltageUnit unit() {
-            return null;
-        }
-    };
-    private final Velocity<VoltageUnit> rampRate = new Velocity<VoltageUnit>() {
-        public double magnitude() {
-            return 0.2;
-        }
-        public double baseUnitMagnitude() {
-            return magnitude();
-        }
-        public Velocity<VoltageUnit> copy() {
-            return rampRate;
-        }
-        public VelocityUnit<VoltageUnit> unit() {
-            return null;
-        }
-    };
+      
 
   // Create the SysId routine
   private SysIdRoutine sysIdRoutine = new SysIdRoutine(
       new SysIdRoutine.Config(
-          rampRate, stepVoltage, null, // Use default config
+          null, null, null, // Use default config
           (state) -> Logger.recordOutput("SysIdTestState", state.toString())),
       new SysIdRoutine.Mechanism(
           (voltage) -> voltageDrive(voltage.in(Volts)),
@@ -171,7 +144,6 @@ public class Drivetrain extends SubsystemBase {
  * @param voltage voltage
  */
   public void voltageDrive(Double voltage) {
-    System.out.println("hi");
     var swerveModuleStates = kinematics.toSwerveModuleStates(
         ChassisSpeeds.discretize(
             true

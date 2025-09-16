@@ -16,10 +16,14 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import frc.robot.reset.GyroResetCommand;
 import edu.wpi.first.wpilibj.PS4Controller.Button;
 
 public class Robot extends LoggedRobot {
-  public final XboxController controller = new XboxController(0);
+  public final CommandXboxController controller = new CommandXboxController(0);
   public final Drivetrain swerve = new Drivetrain();
 
   // Slew rate limiters to make joystick inputs more gentle; 1/3 sec from 0 to 1.
@@ -30,6 +34,11 @@ public class Robot extends LoggedRobot {
   private double speedDivisor;
 
   @Override
+  public void robotPeriodic() {
+    CommandScheduler.getInstance().run();
+  }
+
+  @Override
   public void autonomousPeriodic() {
     driveWithJoystick(false);
     swerve.updateOdometry();
@@ -38,38 +47,41 @@ public class Robot extends LoggedRobot {
   @Override
   public void teleopInit() {
     swerve.resetOdometry();
+    controller.leftBumper().toggleOnTrue(swerve.sysIdQuadistaticForwards());
+    controller.rightBumper().toggleOnTrue(swerve.sysIdQuadistaticBackwards());
+    controller.y().onTrue(new GyroResetCommand(swerve));
   }
 
   @Override
   public void teleopPeriodic() {
     driveWithJoystick(true);
     swerve.periodic();
+    robotPeriodic();
   }
 
   private void driveWithJoystick(boolean fieldRelative) {
     // Get the x speed. We are inverting this because Xbox controllers return
-    // negative values when we push forward.
-    if (controller.getAButton()) {
-      swerve.resetGyro();
-    }
-    if (controller.getStartButton() && controller.getLeftBumperButton() && controller.getRightBumperButton()) {
-      speedDivisor = 1;
-    } else {
-      speedDivisor = 9;
-    }
 
-    while (controller.getLeftTriggerAxis() > 0.6) {
-      swerve.sysIdQuadistaticForwards();
-    }
-    while (controller.getRightTriggerAxis() > 0.6) {
-      swerve.sysIdQuadistaticBackwards();
-    }
-    while (controller.getLeftBumperButtonPressed()) {
-      swerve.sysIdDynamicForwards();
-    }
-    while (controller.getRightBumperButtonPressed()) {
-      swerve.sysIdDynamicBackwards();
-    }
+
+
+    // negative values when we push forward.
+
+    // if (controller.getAButton()) {
+    //   swerve.resetGyro();
+    // }
+    // if (controller.getStartButton() && controller.getLeftBumperButton() && controller.getRightBumperButton()) {
+    //   speedDivisor = 1;
+    // } else {
+    //   speedDivisor = 9;
+    // }
+    //}
+
+    // while (controller.getLeftBumperButtonPressed()) {
+    //   swerve.sysIdDynamicForwards();
+    // }
+    // while (controller.getRightBumperButtonPressed()) {
+    //   swerve.sysIdDynamicBackwards();
+    // }
 
     final var xSpeed = -xspeedLimiter.calculate(MathUtil.applyDeadband(controller.getLeftY(), 0.05))
         * Drivetrain.kMaxSpeed;
