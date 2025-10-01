@@ -31,7 +31,7 @@ public class Robot extends LoggedRobot {
   private final SlewRateLimiter yspeedLimiter = new SlewRateLimiter(3);
   private final SlewRateLimiter rotLimiter = new SlewRateLimiter(3);
 
-  private double speedDivisor;
+  private double speedDivisor = 1;
 
   @Override
   public void robotPeriodic() {
@@ -47,9 +47,17 @@ public class Robot extends LoggedRobot {
   @Override
   public void teleopInit() {
     swerve.resetOdometry();
-    controller.leftBumper().toggleOnTrue(swerve.sysIdQuadistaticForwards());
-    controller.rightBumper().toggleOnTrue(swerve.sysIdQuadistaticBackwards());
-    controller.y().onTrue(new GyroResetCommand(swerve));
+
+    // // Quadistatic Sysid test
+    // controller.leftBumper().toggleOnTrue(swerve.sysIdQuadistaticForwards());
+    // controller.rightBumper().toggleOnTrue(swerve.sysIdQuadistaticBackwards());
+
+    // // Dynamic Sysid test
+    // controller.x().toggleOnTrue(swerve.sysIdDynamicForwards());
+    // controller.y().toggleOnTrue(swerve.sysIdDynamicBackwards());
+
+    // Reset gyro
+    controller.a().onTrue(new GyroResetCommand(swerve));
   }
 
   @Override
@@ -61,9 +69,6 @@ public class Robot extends LoggedRobot {
 
   private void driveWithJoystick(boolean fieldRelative) {
     // Get the x speed. We are inverting this because Xbox controllers return
-
-
-
     // negative values when we push forward.
 
     // if (controller.getAButton()) {
@@ -76,12 +81,6 @@ public class Robot extends LoggedRobot {
     // }
     //}
 
-    // while (controller.getLeftBumperButtonPressed()) {
-    //   swerve.sysIdDynamicForwards();
-    // }
-    // while (controller.getRightBumperButtonPressed()) {
-    //   swerve.sysIdDynamicBackwards();
-    // }
 
     final var xSpeed = -xspeedLimiter.calculate(MathUtil.applyDeadband(controller.getLeftY(), 0.05))
         * Drivetrain.kMaxSpeed;
@@ -99,8 +98,8 @@ public class Robot extends LoggedRobot {
     final var rot = -rotLimiter.calculate(MathUtil.applyDeadband(controller.getRightX(), 0.05))
         * Drivetrain.kMaxAngularSpeed;
 
-    //swerve.drive(xSpeed/speedDivisor, ySpeed/speedDivisor, rot/speedDivisor, fieldRelative, getPeriod());
-    // swerve.drive(xSpeed/9, 0, 0, fieldRelative, getPeriod());
+    swerve.drive(xSpeed/speedDivisor, ySpeed/speedDivisor, rot/speedDivisor, fieldRelative, getPeriod());
+     //swerve.drive(xSpeed/9, 0, 0, fieldRelative, getPeriod());
   }
 
   @Override

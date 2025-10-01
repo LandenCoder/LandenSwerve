@@ -6,6 +6,8 @@ package frc.robot;
 
 import java.io.PrintStream;
 
+import org.littletonrobotics.junction.AutoLog;
+import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 import com.studica.frc.AHRS;
@@ -30,6 +32,7 @@ import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.AnalogGyro;
 import edu.wpi.first.wpilibj.SPI;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -64,21 +67,49 @@ public class Drivetrain extends SubsystemBase {
   private final PIDController autonDrivePIDController = new PIDController(0.8, 0, 0); // 2
   private final ProfiledPIDController autonThetaController = new ProfiledPIDController(3, 0, 0,
       autonRotationConstraints); // 1.5
+  
+      private final Voltage stepVoltage = new Voltage() {
+        public double magnitude() {
+            return 3;
+        }
+        public double baseUnitMagnitude() {
+            return magnitude();
+        }
+        public Voltage copy() {
+            return stepVoltage;
+        }
+        public VoltageUnit unit() {
+            return null;
+        }
+      };
 
       
 
   // Create the SysId routine
   private SysIdRoutine sysIdRoutine = new SysIdRoutine(
       new SysIdRoutine.Config(
-          null, null, null, // Use default config
+          null, stepVoltage, null, // Use default config
           (state) -> Logger.recordOutput("SysIdTestState", state.toString())),
       new SysIdRoutine.Mechanism(
           (voltage) -> voltageDrive(voltage.in(Volts)),
-          // (voltage) -> voltageDrive(voltage.in(Volts)),
           null, // No log consumer, since data is recorded by AdvantageKit
           this));
+
+  private Timer timer;
+  private double lastTime;
+  private double timeDiff;
+  private double initialVelocity;
+  private double finalVelocity;
   
   public Drivetrain() {
+    timer = new Timer();
+    timer.start();
+    timer.reset();
+    lastTime = 0;
+    timeDiff = 0;
+    initialVelocity = 0;
+    finalVelocity = 0;
+
     gyro = new AHRS(NavXComType.kUSB1);
 
     gyro.reset();
@@ -144,6 +175,7 @@ public class Drivetrain extends SubsystemBase {
  * @param voltage voltage
  */
   public void voltageDrive(Double voltage) {
+    Logger.recordOutput("sysID test voltage", voltage);
     var swerveModuleStates = kinematics.toSwerveModuleStates(
         ChassisSpeeds.discretize(
             true
@@ -208,10 +240,17 @@ public class Drivetrain extends SubsystemBase {
     return kMaxSpeed;
   }
 
-  //TODO: make this
-  // public double getMaxAccel() {
-  // return ;
-  // }
+  public double getMaxAccel() {
+  return 9.202445;
+  }
+  public double getAverageDriveVelocity(){
+    return ((
+      frontLeft.getState().speedMetersPerSecond+
+      frontRight.getState().speedMetersPerSecond+
+      backLeft.getState().speedMetersPerSecond+
+      backRight.getState().speedMetersPerSecond)/4
+    );
+  }
 
   @Override
   public void periodic() {
@@ -224,6 +263,17 @@ public class Drivetrain extends SubsystemBase {
     SmartDashboard.putNumber("MetersDriven/fr", frontRight.getPosition().distanceMeters);
     SmartDashboard.putNumber("MetersDriven/bl", backLeft.getPosition().distanceMeters);
     SmartDashboard.putNumber("MetersDriven/br", backRight.getPosition().distanceMeters);
+
+    Logger.recordOutput("drive velocity but BETTER", getAverageDriveVelocity());
+
+    finalVelocity = getAverageDriveVelocity();
+    timer.start();
+    timeDiff = timer.get()-lastTime;
+    lastTime = timer.get();
+    Logger.recordOutput("Acceleration", ((finalVelocity-initialVelocity)/timeDiff));
+    initialVelocity = finalVelocity;
+
+
 
     // do this later (maybe)
     // SmartDashboard.putNumber("Swerve Module/fl desired speed",
@@ -243,6 +293,10 @@ public class Drivetrain extends SubsystemBase {
     Logger.recordOutput("FRmoduleEncoder", frontRight.getAngle());
     Logger.recordOutput("BLmoduleEncoder", backLeft.getAngle());
     Logger.recordOutput("BRmoduleEncoder", backRight.getAngle());
+
+    // Logger.recordOutput("Velocity", gyro.getVelocityX());
+    Logger.recordOutput("Velocity", getAverageDriveVelocity());
+    Logger.recordOutput("Position", odometry.getPoseMeters());
   }
 }
-//API
+// API
