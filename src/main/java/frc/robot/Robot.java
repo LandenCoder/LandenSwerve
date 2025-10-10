@@ -16,20 +16,23 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import frc.robot.reset.GyroResetCommand;
+import frc.robot.commands.reset.GyroResetCommand;
 import edu.wpi.first.wpilibj.PS4Controller.Button;
 
 public class Robot extends LoggedRobot {
   public final CommandXboxController controller = new CommandXboxController(0);
   public final Drivetrain swerve = new Drivetrain();
-
   // Slew rate limiters to make joystick inputs more gentle; 1/3 sec from 0 to 1.
   private final SlewRateLimiter xspeedLimiter = new SlewRateLimiter(3);
   private final SlewRateLimiter yspeedLimiter = new SlewRateLimiter(3);
   private final SlewRateLimiter rotLimiter = new SlewRateLimiter(3);
+
+  public Command autonCommand;
 
   private double speedDivisor = 1;
 
@@ -39,8 +42,19 @@ public class Robot extends LoggedRobot {
   }
 
   @Override
+  public void autonomousInit() {
+    swerve.resetGyro();
+    swerve.resetOdometry();
+    autonCommand = swerve.getAutoCommand(1 ,0 ,0);
+    if(autonCommand != null){
+      autonCommand.schedule();
+    }
+    SmartDashboard.putBoolean("is finished?", isAutonomous());
+  }
+
+  @Override
   public void autonomousPeriodic() {
-    driveWithJoystick(false);
+    //driveWithJoystick(false);
     swerve.updateOdometry();
   }
 

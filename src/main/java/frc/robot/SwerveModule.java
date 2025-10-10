@@ -14,6 +14,7 @@ import com.ctre.phoenix6.hardware.CANcoder;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
@@ -143,6 +144,24 @@ public class SwerveModule {
         driveEncoder.getPosition(), Rotation2d.fromDegrees(getAngle()));
   }
 
+  public double getAbsoluteDirectionPos(){
+    return turningEncoder.getAbsolutePosition().getValueAsDouble();
+}
+
+/**
+ * @return the position of the swerve module in degrees at a 0-360 range.
+ */
+public double getDirectionPosDeg(){
+    return (getAbsoluteDirectionPos()) * 360;
+}
+
+/**
+ * @return the position of the swerve module in radians at a 0 to 2 PI range.
+ */
+public double getDirectionPosRad(){
+    return Math.toRadians(getDirectionPosDeg());
+}
+
   /**
    * Sets the desired state for the module.
    *
@@ -177,6 +196,7 @@ public class SwerveModule {
     driveMotor.setVoltage(driveOutput + driveFeedforward);
     turningMotor.setVoltage(turnOutput);// + turnFeedforward
   }
+
   /**
    * @param desiredState Desired state with voltage and angle.
    */
@@ -190,6 +210,21 @@ public class SwerveModule {
     driveMotor.setVoltage(desiredState.speedMetersPerSecond);
     turningMotor.setVoltage(turnOutput);
   }
+
+  public void setAutonState(SwerveModuleState state) {
+        state.optimize(getState().angle);
+
+        double velocityFeedBack = drivePIDController.calculate(driveEncoder.getVelocity(), state.speedMetersPerSecond);
+        double velocityFeedForward = driveFeedforward2.calculate(state.speedMetersPerSecond);
+
+        double driveMotorV = MathUtil.clamp(velocityFeedBack + velocityFeedForward, -driveMotor.getBusVoltage(), driveMotor.getBusVoltage());  
+
+        double directionMotorPower = turningPIDController.calculate(getDirectionPosRad(), state.angle.getRadians());
+
+        driveMotor.setVoltage(driveMotorV);
+        turningMotor.set(directionMotorPower);
+    }
+
   public void resetOdometry() {
     driveEncoder.setPosition(0);
   }

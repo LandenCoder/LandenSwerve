@@ -18,6 +18,7 @@ import static edu.wpi.first.units.Units.Volts;
 import edu.wpi.first.math.controller.HolonomicDriveController;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -25,6 +26,7 @@ import edu.wpi.first.math.kinematics.Odometry;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
+import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.units.VelocityUnit;
 import edu.wpi.first.units.VoltageUnit;
@@ -39,11 +41,13 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.subsystems.AutonSubsystem;
 
 /** Represents a swerve drive style drivetrain. */
 public class Drivetrain extends SubsystemBase {
   public static final double kMaxSpeed = 3.0; // 3 meters per second
   public static final double kMaxAngularSpeed = Math.PI; // 1/2 rotation per second
+  public static final double maxAccel = 9.202445;
   // TODO: measure into actual locations
   private final Translation2d frontLeftLocation = new Translation2d(0.381, 0.381);
   private final Translation2d frontRightLocation = new Translation2d(0.381, -0.381);
@@ -59,6 +63,8 @@ public class Drivetrain extends SubsystemBase {
       frontLeftLocation, frontRightLocation, backLeftLocation, backRightLocation);
 
   private final AHRS gyro;
+
+  private final AutonSubsystem autonSubsystem = new AutonSubsystem(this);
 
   private final SwerveDriveOdometry odometry;
   private Field2d field = new Field2d();
@@ -125,7 +131,6 @@ public class Drivetrain extends SubsystemBase {
             backLeft.getPosition(),
             backRight.getPosition()
         });
-    // field.setRobotPose(odometry.getPoseMeters());
     field.setRobotPose(odometry.getPoseMeters());
 
     // The methods below return Command objects
@@ -192,9 +197,12 @@ public class Drivetrain extends SubsystemBase {
     backLeft.sysidTestVoltage(swerveModuleStates[2]);
     backRight.sysidTestVoltage(swerveModuleStates[3]);
   }
-  public void sysidtester(Double voltage){
-    System.out.println("hi");
-  }
+
+      public void setAutonModuleStates(SwerveModuleState[] desiredStates) {
+        for (int i = 0; i < 4; i++) {
+            frontLeft.setAutonState(desiredStates[i]);
+        }
+    }
 
   /** Updates the field relative position of the robot. */
   public void updateOdometry() {
@@ -206,6 +214,22 @@ public class Drivetrain extends SubsystemBase {
             backLeft.getPosition(),
             backRight.getPosition()
         });
+  }
+  public void setPose(Pose2d pose){
+    odometry.resetPosition(
+      gyro.getRotation2d(),
+      new SwerveModulePosition[] {
+        frontLeft.getPosition(),
+        frontRight.getPosition(),
+        backLeft.getPosition(),
+        backRight.getPosition()
+    },
+    pose
+    );
+  }
+
+  public void makeMeHappy(){
+    System.out.println("Your code works!!!");
   }
 
   public void resetGyro() {
@@ -241,8 +265,21 @@ public class Drivetrain extends SubsystemBase {
   }
 
   public double getMaxAccel() {
-  return 9.202445;
+  return maxAccel;
   }
+
+  public Rotation2d returnRotation2d(){
+    return gyro.getRotation2d();
+  }
+
+  public Pose2d getPose2d() {
+    return odometry.getPoseMeters();
+  }
+
+  public final Command getAutoCommand(double x, double y, double angle){
+        return autonSubsystem.getCommand(x ,y, angle);
+    }
+
   public double getAverageDriveVelocity(){
     return ((
       frontLeft.getState().speedMetersPerSecond+
