@@ -16,12 +16,12 @@ public class AutonSubsystem extends SubsystemBase{
     //private final movement movement = new movement(drivetrain, 0, 0);
 
     public AutonSubsystem(Drivetrain swerve){
-        swerve = this.swerve;
+        this.swerve = swerve;
     }
     
     public final Command getCommand(double x, double y, double angle){
         //THIS IS FOR TESTING DON'T KEEP THIS
-        Command command = new Tester();
+        Command command = new Tester(swerve);
 
         //Command command = new Forward(swerve, 2);
 

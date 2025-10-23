@@ -19,7 +19,7 @@ public class Forward extends SwerveControllerCommand{
         double maxAccel = swerve.getMaxAccel();
 
         double speedDivisor = 9;
-        double accelDivisor = 9;
+        double accelDivisor = 18;
 
         double distance = metersForward;
 

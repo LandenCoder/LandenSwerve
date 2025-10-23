@@ -34,7 +34,7 @@ public class Robot extends LoggedRobot {
 
   public Command autonCommand;
 
-  private double speedDivisor = 1;
+  private double speedDivisor = 9;
 
   @Override
   public void robotPeriodic() {
@@ -134,10 +134,10 @@ public class Robot extends LoggedRobot {
      * log)
      */
     else {
-      setUseTiming(false); // Run as fast as possible
-      String logPath = LogFileUtil.findReplayLog(); // Pull the replay log from AdvantageScope (or prompt the user)
-      Logger.setReplaySource(new WPILOGReader(logPath)); // Read replay log
-      Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim"))); // Save outputs to a new log
+      // setUseTiming(false); // Run as fast as possible
+      // String logPath = LogFileUtil.findReplayLog(); // Pull the replay log from AdvantageScope (or prompt the user)
+      // Logger.setReplaySource(new WPILOGReader(logPath)); // Read replay log
+      // Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim"))); // Save outputs to a new log
     }
 
     /* Unofficial Rev Compatible Logger, used to log Rev data */

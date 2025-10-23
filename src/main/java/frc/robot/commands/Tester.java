@@ -6,8 +6,8 @@ import frc.robot.Drivetrain;
 public class Tester extends Command{
     private Drivetrain swerve;
 
-    public void tester(){
-
+    public Tester(Drivetrain swerve){
+        this.swerve = swerve;
         addRequirements(swerve);
     }
 

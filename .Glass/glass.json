@@ -45,15 +45,7 @@
     "Connections": {
       "open": true
     },
-    "glass@1": {
-      "Publishers": {
-        "open": false
-      },
-      "Subscribers": {
-        "open": false
-      },
-      "open": false
-    }
+    "visible": true
   },
   "NetworkTables Settings": {
     "mode": "Client (NT4)",
@@ -62,5 +54,23 @@
   },
   "NetworkTables View": {
     "visible": false
+  },
+  "Plots": {
+    "Plot <0>": {
+      "plots": [
+        {
+          "backgroundColor": [
+            0.0,
+            0.0,
+            0.0,
+            0.8500000238418579
+          ],
+          "height": 338
+        }
+      ],
+      "window": {
+        "visible": false
+      }
+    }
   }
 }

@@ -288,6 +288,15 @@ public class Drivetrain extends SubsystemBase {
       backRight.getState().speedMetersPerSecond)/4
     );
   }
+  public double getAverageMetersDriven(){
+    return((
+    frontLeft.getPosition().distanceMeters +
+    frontRight.getPosition().distanceMeters +
+    backLeft.getPosition().distanceMeters +
+    backRight.getPosition().distanceMeters
+    )/4 //getting average (:O
+    );
+  }
 
   @Override
   public void periodic() {
@@ -300,6 +309,7 @@ public class Drivetrain extends SubsystemBase {
     SmartDashboard.putNumber("MetersDriven/fr", frontRight.getPosition().distanceMeters);
     SmartDashboard.putNumber("MetersDriven/bl", backLeft.getPosition().distanceMeters);
     SmartDashboard.putNumber("MetersDriven/br", backRight.getPosition().distanceMeters);
+    SmartDashboard.putNumber("AverageMetersDriven", getAverageMetersDriven());
 
     Logger.recordOutput("drive velocity but BETTER", getAverageDriveVelocity());
 
@@ -337,3 +347,8 @@ public class Drivetrain extends SubsystemBase {
   }
 }
 // API
+
+
+//speed slider is slider 7,
+//when the slider hits the top and bottom of it's axis,
+//it presses buttons 11 and 12
