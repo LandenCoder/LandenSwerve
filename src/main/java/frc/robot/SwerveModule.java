@@ -172,7 +172,7 @@ public double getDirectionPosRad(){
 
     // Optimize the reference state to avoid spinning further than 90 degrees
 
-    //  desiredState.optimize(encoderRotation);///////////////////////OPTIMIZE HERE!!!/////////////////////////////////
+    desiredState.optimize(encoderRotation);///////////////////////OPTIMIZE HERE!!!/////////////////////////////////
 
     // Scale speed by cosine of angle error. This scales down movement perpendicular
     // to the desired

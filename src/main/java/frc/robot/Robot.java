@@ -70,8 +70,7 @@ public class Robot extends LoggedRobot {
     // controller.x().toggleOnTrue(swerve.sysIdDynamicForwards());
     // controller.y().toggleOnTrue(swerve.sysIdDynamicBackwards());
 
-    // Reset gyro
-    controller.a().onTrue(new GyroResetCommand(swerve));
+    controller.y().onTrue(new GyroResetCommand(swerve));
   }
 
   @Override
@@ -79,22 +78,19 @@ public class Robot extends LoggedRobot {
     driveWithJoystick(true);
     swerve.periodic();
     robotPeriodic();
+
+    if (controller.start().getAsBoolean() && controller.leftBumper().getAsBoolean() && controller.rightBumper().getAsBoolean()){
+      speedDivisor = 2;
+    } else {
+      speedDivisor = 9;
+    }
+
+    SmartDashboard.putNumber("Swerve Speed Divisor", speedDivisor);
   }
 
   private void driveWithJoystick(boolean fieldRelative) {
     // Get the x speed. We are inverting this because Xbox controllers return
     // negative values when we push forward.
-
-    // if (controller.getAButton()) {
-    //   swerve.resetGyro();
-    // }
-    // if (controller.getStartButton() && controller.getLeftBumperButton() && controller.getRightBumperButton()) {
-    //   speedDivisor = 1;
-    // } else {
-    //   speedDivisor = 9;
-    // }
-    //}
-
 
     final var xSpeed = -xspeedLimiter.calculate(MathUtil.applyDeadband(controller.getLeftY(), 0.05))
         * Drivetrain.kMaxSpeed;
